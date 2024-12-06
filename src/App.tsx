@@ -1,50 +1,56 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Header } from './components/layout/Header';
 import { Clock } from './components/dashboard/Clock';
 import { QuickStats } from './components/dashboard/QuickStats';
 import { PatientSearch } from './components/patients/PatientSearch';
 import { PatientDetails } from './components/patients/PatientDetails';
 import { PrescriptionForm } from './components/prescriptions/PrescriptionForm';
-import { Patient } from './types';
+import { Patient, Doctor } from './types';
 import { X } from 'lucide-react';
-
-// Mock data
-const mockDoctor = {
-  id: '1',
-  name: 'Dr. Sarah Johnson',
-  imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200&h=200',
-  specialty: 'Cardiologist',
-};
-
-const mockPatients = [
-  {
-    id: 'P001',
-    name: 'John Doe',
-    age: 45,
-    gender: 'Male',
-    lastVisit: '2024-02-15',
-    status: 'Active',
-    bloodGroup: 'A+',
-    contactNumber: '+1234567890',
-    emergencyContact: '+0987654321',
-    medicalHistory: ['Hypertension', 'Diabetes'],
-    allergies: ['Penicillin'],
-  },
-  // Add more mock patients as needed
-];
-
-const mockVitalStats = [
-  {
-    date: '2024-02-01',
-    bloodPressure: { systolic: 120, diastolic: 80 },
-    sugarLevel: 95,
-    bmi: 24.5,
-  },
-  // Add more mock vital stats as needed
-];
+import axios from 'axios';
 
 function App() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
+
+  useEffect(() => {
+    // Function to extract token from URL
+    const getTokenFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('token');
+    };
+
+    const token = getTokenFromUrl();
+
+    if (token) {
+      // Store token in localStorage
+      localStorage.setItem('token', token);
+
+      // Remove token from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Fetch doctor data
+      fetchDoctorData(token);
+    } else {
+      // Optionally, redirect to login if token is missing
+      window.location.href = 'https://medical-webpage-login.vercel.app/';
+    }
+  }, []);
+
+  const fetchDoctorData = async (token: string) => {
+    try {
+      const response = await axios.get('https://medical-backend-l140.onrender.com/api/user', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setDoctor(response.data);
+    } catch (error) {
+      console.error('Error fetching doctor data:', error);
+      // Handle error, possibly redirect to login
+      window.location.href = 'https://medical-webpage-login.vercel.app/';
+    }
+  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -61,17 +67,21 @@ function App() {
     setSelectedPatient(null);
   };
 
+  if (!doctor) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
-      <Header />
-      
+      <Header doctor={doctor} />
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           {/* Greeting and Clock Section */}
           <div className="flex flex-col md:flex-row justify-between items-center bg-white rounded-lg shadow-md p-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {getGreeting()}, Dr. {mockDoctor.name.split(' ')[1]}
+                {getGreeting()}, Dr. {doctor.name.split(' ')[1]}
               </h1>
               <p className="text-gray-600">Welcome to your dashboard</p>
             </div>
@@ -86,7 +96,7 @@ function App() {
             <h2 className="text-xl font-semibold mb-4">Patient Management</h2>
             <PatientSearch
               onSearch={(query) => console.log('Searching:', query)}
-              patients={mockPatients}
+              patients={[]} // Replace with actual patient data fetched from API
               onSelectPatient={handlePatientSelect}
             />
           </div>
@@ -105,7 +115,7 @@ function App() {
               </div>
               <PatientDetails
                 patient={selectedPatient}
-                vitalStats={mockVitalStats}
+                vitalStats={[]} // Replace with actual vital stats fetched from API
               />
             </div>
           )}

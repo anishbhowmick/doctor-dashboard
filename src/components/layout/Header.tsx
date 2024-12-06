@@ -3,8 +3,17 @@ import { LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useModal } from '../../hooks/useModal';
 
-export function Header() {
-  const { doctor, logout } = useAuth();
+interface HeaderProps {
+  doctor: {
+    id: string;
+    name: string;
+    imageUrl: string;
+    specialty: string;
+  };
+}
+
+export function Header({ doctor }: HeaderProps) {
+  const { logout } = useAuth();
   const { showModal } = useModal();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -12,7 +21,11 @@ export function Header() {
     showModal({
       title: 'Confirm Logout',
       message: 'Are you sure you want to logout?',
-      onConfirm: logout,
+      onConfirm: () => {
+        logout();
+        localStorage.removeItem('token');
+        window.location.href = 'https://medical-webpage-login.vercel.app/';
+      },
     });
   };
 
