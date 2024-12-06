@@ -1,6 +1,5 @@
 import React from 'react';
 import { LogOut, Menu, X } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
 import { useModal } from '../../hooks/useModal';
 
 interface HeaderProps {
@@ -13,7 +12,6 @@ interface HeaderProps {
 }
 
 export function Header({ doctor }: HeaderProps) {
-  const { logout } = useAuth();
   const { showModal } = useModal();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -22,8 +20,9 @@ export function Header({ doctor }: HeaderProps) {
       title: 'Confirm Logout',
       message: 'Are you sure you want to logout?',
       onConfirm: () => {
-        logout();
+        // Clear token from localStorage
         localStorage.removeItem('token');
+        // Redirect to login page
         window.location.href = 'https://medical-webpage-login.vercel.app/';
       },
     });

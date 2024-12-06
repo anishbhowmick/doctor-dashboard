@@ -1,169 +1,134 @@
 import React, { useState } from 'react';
-import { Plus, Printer } from 'lucide-react';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
-interface Medicine {
-  name: string;
+interface PrescriptionFormProps {
+  patientId: string;
+}
+
+interface Prescription {
+  medication: string;
   dosage: string;
-  timing: string;
-  frequency: number;
-  duration: number;
   instructions: string;
 }
 
-export function PrescriptionForm() {
-  const [medicines, setMedicines] = useState<Medicine[]>([]);
-  const [currentMedicine, setCurrentMedicine] = useState<Medicine>({
-    name: '',
+export function PrescriptionForm({ patientId }: PrescriptionFormProps) {
+  const [prescription, setPrescription] = useState<Prescription>({
+    medication: '',
     dosage: '',
-    timing: 'after',
-    frequency: 1,
-    duration: 1,
     instructions: '',
   });
 
-  const handleAddMedicine = () => {
-    setMedicines([...medicines, currentMedicine]);
-    setCurrentMedicine({
-      name: '',
-      dosage: '',
-      timing: 'after',
-      frequency: 1,
-      duration: 1,
-      instructions: '',
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setPrescription({
+      ...prescription,
+      [e.target.name]: e.target.value,
     });
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Basic validation
+    if (!prescription.medication || !prescription.dosage || !prescription.instructions) {
+      toast.error('Please fill in all fields.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        throw new Error('Authentication token missing.');
+      }
+
+      await axios.post(
+        'https://medical-backend-l140.onrender.com/api/prescriptions',
+        {
+          patientId,
+          ...prescription,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success('Prescription added successfully.');
+
+      // Reset form
+      setPrescription({
+        medication: '',
+        dosage: '',
+        instructions: '',
+      });
+    } catch (error: any) {
+      console.error('Error adding prescription:', error);
+      toast.error(error.response?.data?.error || 'Failed to add prescription.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">New Prescription</h2>
-        <button
-          onClick={handlePrint}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <Printer className="w-5 h-5 mr-2" />
-          Print
-        </button>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="medication" className="block text-sm font-medium text-gray-700">
+          Medication
+        </label>
+        <input
+          type="text"
+          name="medication"
+          id="medication"
+          value={prescription.medication}
+          onChange={handleChange}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          required
+        />
       </div>
 
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Medicine Name
-            </label>
-            <input
-              type="text"
-              value={currentMedicine.name}
-              onChange={(e) =>
-                setCurrentMedicine({ ...currentMedicine, name: e.target.value })
-              }
-              className="mt-1 block w-full border rounded-md px-3 py-2"
-              placeholder="Enter medicine name"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Dosage
-            </label>
-            <input
-              type="text"
-              value={currentMedicine.dosage}
-              onChange={(e) =>
-                setCurrentMedicine({ ...currentMedicine, dosage: e.target.value })
-              }
-              className="mt-1 block w-full border rounded-md px-3 py-2"
-              placeholder="e.g., 500mg"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Timing
-            </label>
-            <select
-              value={currentMedicine.timing}
-              onChange={(e) =>
-                setCurrentMedicine({ ...currentMedicine, timing: e.target.value })
-              }
-              className="mt-1 block w-full border rounded-md px-3 py-2"
-            >
-              <option value="before">Before meals</option>
-              <option value="after">After meals</option>
-              <option value="with">With meals</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Frequency (per day)
-            </label>
-            <input
-              type="number"
-              value={currentMedicine.frequency}
-              onChange={(e) =>
-                setCurrentMedicine({
-                  ...currentMedicine,
-                  frequency: parseInt(e.target.value),
-                })
-              }
-              className="mt-1 block w-full border rounded-md px-3 py-2"
-              min="1"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Special Instructions
-          </label>
-          <textarea
-            value={currentMedicine.instructions}
-            onChange={(e) =>
-              setCurrentMedicine({
-                ...currentMedicine,
-                instructions: e.target.value,
-              })
-            }
-            className="mt-1 block w-full border rounded-md px-3 py-2"
-            rows={3}
-          />
-        </div>
-
-        <button
-          onClick={handleAddMedicine}
-          className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Medicine
-        </button>
-
-        {medicines.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-lg font-medium mb-4">Prescribed Medicines</h3>
-            <div className="space-y-4">
-              {medicines.map((medicine, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-50 p-4 rounded-lg"
-                >
-                  <h4 className="font-medium">{medicine.name}</h4>
-                  <p className="text-sm text-gray-600">
-                    {medicine.dosage} - {medicine.timing} meals, {medicine.frequency}x daily
-                  </p>
-                  {medicine.instructions && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      Instructions: {medicine.instructions}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+      <div>
+        <label htmlFor="dosage" className="block text-sm font-medium text-gray-700">
+          Dosage
+        </label>
+        <input
+          type="text"
+          name="dosage"
+          id="dosage"
+          value={prescription.dosage}
+          onChange={handleChange}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          required
+        />
       </div>
-    </div>
+
+      <div>
+        <label htmlFor="instructions" className="block text-sm font-medium text-gray-700">
+          Instructions
+        </label>
+        <textarea
+          name="instructions"
+          id="instructions"
+          value={prescription.instructions}
+          onChange={handleChange}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          rows={3}
+          required
+        ></textarea>
+      </div>
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full py-2 px-4 bg-gradient-to-r from-[#4A90E2] to-[#8E44AD] text-white font-semibold rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+      >
+        {isSubmitting ? 'Submitting...' : 'Add Prescription'}
+      </button>
+    </form>
   );
 }

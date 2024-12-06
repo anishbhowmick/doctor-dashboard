@@ -32,7 +32,7 @@ function App() {
       // Fetch doctor data
       fetchDoctorData(token);
     } else {
-      // Optionally, redirect to login if token is missing
+      // Redirect to login if token is missing
       window.location.href = 'https://medical-webpage-login.vercel.app/';
     }
   }, []);
@@ -47,7 +47,7 @@ function App() {
       setDoctor(response.data);
     } catch (error) {
       console.error('Error fetching doctor data:', error);
-      // Handle error, possibly redirect to login
+      // Redirect to login on error
       window.location.href = 'https://medical-webpage-login.vercel.app/';
     }
   };
@@ -124,7 +124,7 @@ function App() {
           {selectedPatient && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4">Prescriptions</h2>
-              <PrescriptionForm />
+              <PrescriptionForm patientId={selectedPatient.id} />
             </div>
           )}
         </div>
