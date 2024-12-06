@@ -1,40 +1,17 @@
-import { useState, useEffect } from 'react';
-
-interface Doctor {
-  id: string;
-  name: string;
-  imageUrl: string;
-  specialty: string;
-}
+import { useState } from 'react';
 
 export function useAuth() {
-  const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [doctor] = useState({
+    id: '1',
+    name: 'Dr. Sarah Johnson',
+    imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200&h=200',
+    specialty: 'Cardiologist',
+  });
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('doctor');
-    setDoctor(null);
+    // Implement logout logic here
     console.log('Logging out...');
-    window.location.href = 'https://medical-webpage-login.vercel.app/';
   };
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedDoctor = localStorage.getItem('doctor');
-
-    if (storedToken && storedDoctor) {
-      try {
-        const parsedDoctor: Doctor = JSON.parse(storedDoctor);
-        setDoctor(parsedDoctor);
-      } catch (error) {
-        console.error('Error parsing doctor data from localStorage:', error);
-        logout();
-      }
-    } else {
-      console.log('No token or doctor data found, redirecting to login.');
-      logout();
-    }
-  }, []);
 
   return { doctor, logout };
 }

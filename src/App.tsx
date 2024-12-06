@@ -7,7 +7,14 @@ import { PatientDetails } from './components/patients/PatientDetails';
 import { PrescriptionForm } from './components/prescriptions/PrescriptionForm';
 import { Patient } from './types';
 import { X } from 'lucide-react';
-import { useAuth } from './hooks/useAuth';
+
+// Mock data
+const mockDoctor = {
+  id: '1',
+  name: 'Dr. Sarah Johnson',
+  imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200&h=200',
+  specialty: 'Cardiologist',
+};
 
 const mockPatients = [
   {
@@ -37,7 +44,6 @@ const mockVitalStats = [
 ];
 
 function App() {
-  const { doctor } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
   const getGreeting = () => {
@@ -65,7 +71,7 @@ function App() {
           <div className="flex flex-col md:flex-row justify-between items-center bg-white rounded-lg shadow-md p-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {getGreeting()}, {doctor ? `Dr. ${doctor.name.split(' ')[1]}` : 'Doctor'}
+                {getGreeting()}, Dr. {mockDoctor.name.split(' ')[1]}
               </h1>
               <p className="text-gray-600">Welcome to your dashboard</p>
             </div>
